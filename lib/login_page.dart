@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:qr_bar_code_scanner_dialog/qr_bar_code_scanner_dialog.dart';
+import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -14,8 +14,7 @@ class LoginPage extends StatefulWidget {
 class _State extends State<LoginPage> {
   TextEditingController barcodeController = TextEditingController();
   late FocusNode focusNode;
-  final _qrBarCodeScannerDialogPlugin = QrBarCodeScannerDialog();
-  String? code;
+  String barcode = '';
 
   @override
   void initState() {
@@ -173,14 +172,30 @@ class _State extends State<LoginPage> {
           child: Icon(Icons.barcode_reader),
           backgroundColor: Colors.blueAccent,
           onPressed: () async {
-            _qrBarCodeScannerDialogPlugin.getScannedQrBarCode(
-                context: context,
-                onCode: (code) {
-                  setState(() {
-                    this.code = code;
-                    barcodeController.text = code!;
-                  });
-                });
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => AiBarcodeScanner(
+                  validator: (value) {
+                    return value.startsWith('https://');
+                  },
+                  canPop: false,
+                  onScan: (String value) {
+                    debugPrint(value);
+                    setState(() {
+                      barcode = value;
+                      barcodeController.text = barcode;
+                    });
+                  },
+                  onDetect: (p0) {},
+                  onDispose: () {
+                    debugPrint("Barcode scanner disposed!!");
+                  },
+                  controller: MobileScannerController(
+                    detectionSpeed: DetectionSpeed.noDuplicates,
+                  ),
+                ),
+              ),
+            );
           }),
     );
   }
